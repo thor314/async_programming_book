@@ -36,6 +36,7 @@ impl Future for TimerFuture {
         let mut shared_state = self.shared_state.lock().unwrap();
 
         if shared_state.completed {
+            println!("*4-ish* polled ready: {}",self.name);
             Poll::Ready(()) // yeet it up
         } else {
             // Set waker so that the thread can wake up the current task
@@ -193,7 +194,7 @@ pub mod executor {
             // THERE IS A TASK IN THE READY QUEUE, MAGGOT
             while let Ok(task) = self.ready_queue.recv() {
                 println!(
-                    "*uhh* A task! Polling. Count of task so far: {:?}",
+                    "*uhh* Arcwake handed me a task! Calling all wakers. Count of task so far: {:?}",
                     count
                 );
                 count += 1;
@@ -206,6 +207,7 @@ pub mod executor {
                     let context = &mut Context::from_waker(&*waker);
                     // Poll the task with. If it's pending, put it back to run it again.
                     if future.as_mut().poll(context).is_pending() {
+                        // put it back
                         *future_slot = Some(future)
                     }
                 }
